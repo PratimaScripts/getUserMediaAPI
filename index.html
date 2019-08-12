@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="css/style.css" />
+    <title>getUserMedia Demo</title>
+  </head>
+  <body>
+    <h1>getUserMedia API</h1>
+    <video id="video" autoplay="autoplay" controls="true"></video>
+
+    <div class="buttons-wrapper">
+      <button id="button-play-gum" class="button-demo" href="#">
+        Play Demo
+      </button>
+      <button id="button-stop-gum" class="button-demo" href="#">
+        Stop Demo
+      </button>
+    </div>
+
+    <span id="gum-unsupported" class="hidden">API not supported</span>
+    <span id="gum-partially-supported" class="hidden"
+      >API partially supported</span
+    >
+
+    <script>
+      var videoStream = null;
+      var video = document.getElementById("video");
+
+      // Test Browser Support
+      window.navigator = window.navigator || {};
+      navigator.getUserMedia =
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        null;
+
+      if (navigator.getUserMedia === null) {
+        document.getElementById("gum-unsupported").classList.remove("hidden");
+        document
+          .getElementById("button-play-gum")
+          .setAttribute("disabled", "disabled");
+        document
+          .getElementById("button-stop-gum")
+          .setAttribute("disabled", "disabled");
+      } else {
+        // Opera <= 12.16 accepts the direct stream.
+        // More on this here: http://dev.opera.com/articles/view/playing-with-html5-video-and-getusermedia-support/
+
+        // Opera <= 12.16 support video only.
+        var audioContext =
+          window.AudioContext || window.webkitAudioContext || null;
+        if (audioContext === null) {
+          document
+            .getElementById("gum-partially-supported")
+            .classList.remove("hidden");
+        }
+
+        document
+          .getElementById("button-play-gum")
+          .addEventListener("click", function() {
+            // Capture user's audio and video source
+            navigator.getUserMedia(
+              {
+                video: true,
+                audio: true
+              },
+              function(stream) {
+                videoStream = stream;
+                // Stream the data
+
+                // this is depreciated in the new chrome update.
+                // video.src = createSrc(stream);
+
+                // Instead of setting the src property to URL.createObjectURL(stream), we're now
+                // supposed to set the srcObject property to the stream directly.
+                // https://stackoverflow.com/questions/53626318/chrome-update-failed-to-execute-createobjecturl-on-url
+                video.srcObject = stream;
+
+                video.play();
+              },
+              function(error) {
+                console.log("Video capture error: ", error.code);
+              }
+            );
+          });
+        document
+          .getElementById("button-stop-gum")
+          .addEventListener("click", function() {
+            // Pause the video
+            video.pause();
+            // Stop the stream
+            //videoStream.stop();
+            videoStream.getTracks().forEach(function(track) {
+              track.stop();
+            });
+          });
+      }
+    </script>
+  </body>
+</html>
